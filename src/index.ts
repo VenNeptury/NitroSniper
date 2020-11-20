@@ -15,32 +15,28 @@ client.on('raw', (packet: any) => {
 	const channel = client.channels.get(packet.d.channel_id) as TextChannel;
 	if (!channel) return;
 	if (channel.messages.has(packet.d.id)) return;
-	channel.fetchMessage(packet.d.id).then(msg => client.emit('messageUpdate', null, msg));
+	channel
+		.fetchMessage(packet.d.id)
+		.then(msg => client.emit('messageUpdate', null, msg))
+		.catch(() => null);
 });
 
 client.on('message', handleMessage);
 client.on('messageUpdate', (_, msg) => handleMessage(msg));
 
-function handleMessage(msg: Message) {
+async function handleMessage(msg: Message) {
 	const match = msg.content.match(nitroMatcher);
 	if (!match) return;
 
 	const code = match[2];
-	if (snipedCodes.has(code)) return;
-	redeemCode(msg, code);
-}
+	if (!code || snipedCodes.has(code)) return;
 
-function log(msg: string) {
-	console.log(msg);
-	if(logChannel) (client.channels.get(logChannel) as TextChannel)?.send(msg);
-}
-
-async function redeemCode(msg: Message, code: string) {
 	const res = await fetch(`https://discordapp.com/api/v6/entitlements/gift-codes/${code}/redeem`, {
 		method: 'POST',
 		body: JSON.stringify({ channel_id: msg.channel.id }),
 		headers: { authorization: token, 'user-agent': 'Mozilla/5.0', 'content-type': 'application/json' }
-	});
+	}).catch(() => null);
+	if (!res) return;
 
 	const json = await res.json();
 
@@ -61,6 +57,11 @@ async function redeemCode(msg: Message, code: string) {
 			}, 1000 * 60 * 60 * throttling.cooldownInHours);
 		}
 	}
+}
+
+function log(msg: string) {
+	console.log(msg);
+	if (logChannel) (client.channels.get(logChannel) as TextChannel)?.send(msg).catch(() => null);
 }
 
 client.login(token);
