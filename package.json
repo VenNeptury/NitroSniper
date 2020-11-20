@@ -1,0 +1,27 @@
+{
+	"name": "nitro-sniper",
+	"author": "VenNeptury",
+	"version": "1.0.0",
+	"description": "A discord selfbot that automatically detects discord nitro codes in messages and attempts to redeem",
+	"keywords": [
+		"discord",
+		"nitro",
+		"sniper",
+		"selfbot"
+	],
+	"license": "AGPL-3.0",
+	"main": "dist/index.js",
+	"dependencies": {
+		"discord.js": "11",
+		"node-fetch": "^2.6.1"
+	},
+	"devDependencies": {
+		"typescript": "^4.1.2",
+		"@types/node-fetch": "^2.5.7"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "npm run build && node .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	}
+}

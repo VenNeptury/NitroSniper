@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"incremental": true,
+		"noEmitOnError": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitAny": true,
+        "removeComments": true,
+        "resolveJsonModule": true,
+		"outDir": "dist",
+		"strict": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"moduleResolution": "Node",
+		"lib": ["ESNext", "ES2020"],
+		"module": "commonjs",
+		"target": "ES2019"
+	},
+	"compileOnSave": true,
+	"include": ["src/**/*.ts"]
+}

@@ -1,0 +1,8 @@
+{
+	"token": "",
+    "logChannel": "",
+	"throttling": {
+		"maxClaims": 2,
+		"cooldownInHours": 24
+	}
+}
