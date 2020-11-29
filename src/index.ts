@@ -31,17 +31,27 @@ async function handleMessage(msg: Message) {
 	const code = match[2];
 	if (!code || snipedCodes.has(code)) return;
 
-	const res = await fetch(`https://discordapp.com/api/v6/entitlements/gift-codes/${code}/redeem`, {
+	const res = await fetch(`https://discord.com/api/v8/entitlements/gift-codes/${code}/redeem`, {
 		method: 'POST',
-		body: JSON.stringify({ channel_id: msg.channel.id }),
-		headers: { authorization: token, 'user-agent': 'Mozilla/5.0', 'content-type': 'application/json' }
+		body: JSON.stringify({ channel_id: null, payment_source_id: null }),
+		headers: {
+			authorization: token,
+			'user-agent':
+				'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.308 Chrome/78.0.3904.130 Electron/7.3.2 Safari/537.36',
+			'content-type': 'application/json',
+			acccept: '*/*',
+			'accept-language': 'en-GB',
+			'accept-encoding': 'gzip, deflate, br',
+			referer: msg.guild ? `https://discord.com/channels/${msg.guild.id}/${msg.channel.id}` : ''
+		}
 	}).catch(() => null);
 	if (!res) return;
 
 	const json = await res.json();
 
+	log(`${new Date().toLocaleTimeString()} - Found code ${code} on ${msg.guild?.name || msg.author.username}. ${json.message}`);
+
 	if (json.message.includes('nitro')) {
-		log(`${new Date().toLocaleTimeString()} - Successfully redeemed code ${code} by ${msg.author.tag} ${msg.guild ? `on server ${msg.guild.name}` : ''}`);
 		claims++;
 		snipedCodes.add(code);
 
