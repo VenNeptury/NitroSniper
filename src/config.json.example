@@ -1,6 +1,8 @@
 {
-	"token": "",
-	"logChannel": "",
+	"token": "mfa....",
+	"userAgent": "Mozilla/5.0",
+	"slaves": [],
+	"webhook": "https://discord.com/api/webhooks/...",
 	"throttling": {
 		"maxClaims": 2,
 		"cooldownInHours": 24
