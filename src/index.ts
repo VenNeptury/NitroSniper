@@ -1,10 +1,29 @@
-import { Client, Collection, Message } from 'discord.js';
+import { Client, Collection, Message, TextChannel } from 'discord.js';
+import fs from 'fs';
 import fetch from 'node-fetch';
+import path from 'path';
 import { token, throttling, webhook, slaves, userAgent } from './config.json';
 
 const nitroMatcher = /(discord.com\/gifts\/|discordapp.com\/gifts\/|discord.gift\/)([a-zA-Z0-9]+)/i;
+const colors = {
+	CYAN: 0x00ffff,
+	RED: 0xff073a,
+	GREEN: 0x39ff14
+};
 
 const snipedCodes = new Set<string>();
+const logFile = path.join(__dirname, '../attempted_codes.log');
+try {
+	fs.readFileSync(logFile, 'utf8')
+		.split('\n')
+		.filter(x => Boolean(x))
+		.forEach(x => snipedCodes.add(x));
+} catch {
+	// openSync(logFile, 'w');
+}
+
+const logFileStream = fs.createWriteStream(logFile, { flags: 'a', encoding: 'utf-8' });
+
 let claims = 0;
 
 const clients = new Collection<string, Client>();
@@ -27,7 +46,8 @@ for (const slaveToken of slaves) {
 	initHandlers(client);
 	client.once('ready', () => {
 		client.user.setStatus('invisible');
-		log(`Successfully initiated slave ${client.user.tag} ${client.user.bot ? '(BOT)' : '(USER)'} with ${client.guilds.size} servers`, client);
+		const user = `[${client.user.tag}](https://discord.com/users/${client.user.id}) ${client.user.bot ? '(BOT)' : '(USER)'}`;
+		log(`Successfully initiated slave ${user} with ${client.guilds.size} servers`, client, colors.CYAN);
 	});
 
 	client.login(slaveToken);
@@ -51,7 +71,7 @@ async function handleMessage(msg: Message) {
 	const code = match[2];
 	if (!code || snipedCodes.has(code)) return;
 
-	const res = await fetch(`https://discord.com/api/v8/entitlements/gift-codes/${code}/redeem`, {
+	const json = await fetch(`https://discord.com/api/v8/entitlements/gift-codes/${code}/redeem`, {
 		method: 'POST',
 		body: JSON.stringify({ channel_id: null, payment_source_id: null }),
 		headers: {
@@ -59,48 +79,67 @@ async function handleMessage(msg: Message) {
 			'user-agent': userAgent,
 			'content-type': 'application/json'
 		}
-	}).catch(() => void 0);
-	if (!res) return;
+	})
+		.then(res => res.json())
+		.catch(() => void 0);
+	if (!json) return;
 
-	const json = await res.json();
+	snipedCodes.add(code);
+	logFileStream.write(`${code}\n`);
 
-	log(`Found code \`${code}\` on \`${msg.guild?.name || msg.author.username}\`. ${json.message}`, msg.client);
+	const channel = msg.guild
+		? `[${msg.guild.name} • ${(msg.channel as TextChannel).name}](${msg.url})`
+		: `[${msg.author.tag}](https://discord.com/users/${msg.author.id})`;
 
-	if (json.message.includes('nitro')) {
+	let output = `Found code \`${code}\`  [${channel}]\n\n`;
+
+	if (json.consumed) {
+		log(`${output}Enjoy your ${json.subscription_plan.name} :DD`, msg, colors.GREEN);
+
 		claims++;
-		snipedCodes.add(code);
 
 		if (claims >= throttling.maxClaims) {
-			log(`Reached maximum amount of claims. Idling for ${throttling.cooldownInHours} hours.`);
+			log(`Reached maximum amount of claims. Idling for ${throttling.cooldownInHours} hours.`, msg, colors.CYAN);
+
 			claims = 0;
 			clients.forEach(clearHandlers);
+
 			setTimeout(() => {
-				log(`Finished idling. Looking for codes again.`);
+				log(`Finished idling. Looking for codes again.`, msg, colors.CYAN);
 				clients.forEach(initHandlers);
 			}, 1000 * 60 * 60 * throttling.cooldownInHours);
 		}
-	}
+	} else log(`${output}Failed to redeem: ${json.message}`, msg);
 }
 
-function log(msg: string, slave?: Client) {
-	console.log(`${new Date().toLocaleTimeString()} - ${msg}`);
+function log(description: string, msg: Message | Client, color = colors.RED) {
+	const body = createWebHookBody(description, msg, color);
+	const consoleDescription = description.replace(/\[([^\]]+)\]\([^)]+\)/, '$1').replace(/\n+/, ' - ');
+
+	console.log(`${new Date().toLocaleString()} • ${consoleDescription}`);
 
 	if (webhook)
 		fetch(webhook, {
 			method: 'POST',
-			body: JSON.stringify({
-				username: 'Nitro Sniper',
-				avatar_url: slave?.user.displayAvatarURL,
-				embeds: [
-					{
-						description: msg,
-						timestamp: new Date().toISOString(),
-						author: slave ? { name: slave.user.tag, icon_url: slave.user.displayAvatarURL } : null
-					}
-				]
-			}),
+			body: JSON.stringify(body),
 			headers: {
 				'Content-Type': 'application/json'
 			}
 		}).catch(() => void 0);
+}
+
+function createWebHookBody(description: string, client: Message | Client, color = colors.RED) {
+	client = client instanceof Message ? client.client : client;
+
+	return {
+		username: 'Nitro Sniper',
+		avatar_url: client.user.displayAvatarURL,
+		embeds: [
+			{
+				description,
+				// author: { name: msg.user.tag, icon_url: msg.user.displayAvatarURL },
+				color
+			}
+		]
+	};
 }
