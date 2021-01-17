@@ -1,5 +1,7 @@
 ## Nitro Sniper
 
+> :warning: **THIS TOOL VIOLATES DISCORDS TERMS OF SERVICE. USING IT MIGHT LEAD TO A PERMAMENT TERMINATION OF YOUR ACCOUNT. USE AT YOUR OWN RISK**
+
 A discord selfbot that automatically detects discord nitro codes in messages and attempts to redeem
 
 # Setup
