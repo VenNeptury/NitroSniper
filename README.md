@@ -1,3 +1,5 @@
+# THIS MODULE IS DEPRECATED. Use the much faster and easier to use https://github.com/Vendicated/NitroSniperCs instead
+
 ## Nitro Sniper
 
 > :warning: **THIS TOOL VIOLATES DISCORDS TERMS OF SERVICE. USING IT MIGHT LEAD TO A PERMAMENT TERMINATION OF YOUR ACCOUNT. USE AT YOUR OWN RISK**
