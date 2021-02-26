@@ -1,6 +1,6 @@
 {
 	"name": "nitro-sniper",
-	"author": "VenNeptury",
+	"author": "Vendicated",
 	"version": "1.0.0",
 	"description": "A discord selfbot that automatically detects discord nitro codes in messages and attempts to redeem",
 	"keywords": [
